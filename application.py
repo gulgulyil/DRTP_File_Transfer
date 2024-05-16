@@ -10,7 +10,7 @@ def start_drtp_server(server_adress, server_port, discard_seq_num):
     ser_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # Assign the socket to the provided IP address and port number
     ser_sock.bind((server_adress, server_port))
-    print(f'Server is started at {server_adress} : {server_port}')
+    print(f'Server is started at {server_adress} : {server_port}\n')
 
     # Set up a DRTP object (Drtp is a class, an object from this class is being instantiated here)
     drtp = Drtp() 
@@ -87,13 +87,13 @@ def start_drtp_server(server_adress, server_port, discard_seq_num):
     # Calculate the throughput (in Mbps) by dividing the amount of data received by the elapsed time and converting to Mbps
     throughput = "{:.2f}".format(data_received / elapsed_time / 125000)  # Convert to Mbps
     print('The throughput is {} Mbps'.format(throughput))
-    print('Connection Closes')
+    print('Connection Closes\n')
 
 #Creates and sends a series of packets to transmit the file to the specified server
 def transfer_file(socket, host, port, filename, win_size):
     # 'base_seq_num' is the sequence number of the oldest unacknowledged packet
     base_seq_num = 0
-     # 'next_seq_num' is the smallest unused sequence number, starts from 1
+    # 'next_seq_num' is the smallest unused sequence number, starts from 1
     next_seq_num = 1
     # List to store the packets
     packets = []
@@ -110,9 +110,12 @@ def transfer_file(socket, host, port, filename, win_size):
                 if not data:
                     break
 
+                # Use the DRTP instance to create a packet with the read data
                 packet = drtp.create_packet(data)
+                # Store the packet in the list of packets
                 packets.append(packet)
                 socket.sendto(packet, (host, port))
+                # Append the sequence number to the sliding window
                 sliding_win.append(next_seq_num)
                 list_sliding = list(sliding_win)
                 print('{} -- packet with seq = {} is sent, sliding window = {{{}}}'.format(datetime.now().time(), next_seq_num, ', '.join(map(str, list_sliding))))
@@ -139,7 +142,7 @@ def transfer_file(socket, host, port, filename, win_size):
 
             if not data:
                 break
-    print("\nData transfer completed\n")
+    print("\nData Finished\n")
 
 def start_drtp_client(client_address, client_port, filename, win_size):
     # Set up a socket for client and specify a timeout duration 
@@ -149,7 +152,7 @@ def start_drtp_client(client_address, client_port, filename, win_size):
     drtp = Drtp()
 
     # Connection Establishment Phase
-    print("Connection Establishment Phase:\n")
+    print("\nConnection Establishment Phase:\n")
 
     drtp.seq_num = 1
     # Create and send a SYN packet
@@ -170,14 +173,15 @@ def start_drtp_client(client_address, client_port, filename, win_size):
             sock.sendto(ack_packet, (client_address, client_port))
             print('ACK packet is sent\n')
             print("Connection established\n")
-            print('\nData transfer phase begins:\n')
+            print('\nData Transfer:\n')
             break
 
     # Start sending the file using Go-Back-N protocol
     transfer_file(sock, client_address, client_port, filename, win_size)
+    
 
     # Connection Teardown Phase
-    print("\nConnection Teardown Phase:\n")
+    print("\nConnection Teardown:\n")
 
     # Send a FIN packet
     fin_packet = drtp.create_packet(b'', FIN=True)
@@ -193,7 +197,7 @@ def start_drtp_client(client_address, client_port, filename, win_size):
             print('FIN ACK packet is received')
             break
 
-    print("\nConnection is now closed\n")
+    print("\nConnection Closes\n")
     sock.close()
 
 if __name__ == '__main__':
